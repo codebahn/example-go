@@ -26,18 +26,19 @@ jobs:
       - name: Build image
         run: docker build -t myapp:${{ github.sha }} .
 
-      # Uncomment to push to a container registry.
-      # Add REGISTRY_USER and REGISTRY_PASSWORD as repository secrets.
+      # Uncomment to push to the built-in Codebahn container registry.
+      # No secrets needed; the built-in workflow token authenticates automatically.
       #
       # - name: Log in to registry
-      #   run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login registry.example.com -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+      #   run: echo "${{ github.token }}" | docker login codebahn.net -u "${{ github.actor }}" --password-stdin
       #
       # - name: Tag and push
       #   run: |
-      #     docker tag myapp:${{ github.sha }} registry.example.com/myorg/myapp:${{ github.sha }}
-      #     docker tag myapp:${{ github.sha }} registry.example.com/myorg/myapp:latest
-      #     docker push registry.example.com/myorg/myapp:${{ github.sha }}
-      #     docker push registry.example.com/myorg/myapp:latest
+      #     image="codebahn.net/${{ github.repository }}"
+      #     docker tag myapp:${{ github.sha }} "$image:${{ github.sha }}"
+      #     docker tag myapp:${{ github.sha }} "$image:latest"
+      #     docker push "$image:${{ github.sha }}"
+      #     docker push "$image:latest"
 
       - name: Smoke test
         run: |
