@@ -29,6 +29,8 @@ jobs:
       - name: Smoke test
         run: |
           docker run -d --name smoketest -p 9090:8080 myapp:${{ github.sha }}
-          sleep 2
-          curl -sf http://localhost:9090/health
+          for i in $(seq 1 10); do
+            curl -sf http://localhost:9090/health && break
+            sleep 1
+          done
           docker stop smoketest
