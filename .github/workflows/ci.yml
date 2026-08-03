@@ -42,9 +42,21 @@ jobs:
 
       - name: Smoke test
         run: |
-          docker run -d --name smoketest -p 9090:8080 myapp:${{ github.sha }}
-          for i in $(seq 1 10); do
-            curl -sf http://localhost:9090/health && break
-            sleep 1
-          done
-          docker stop smoketest
+          set -euo pipefail
+
+          # The job runs inside a container, so a published host port is not
+          # reachable from here. Put the app and the probe on a shared network
+          # and address the app by container name instead. Names are scoped to
+          # the run id so concurrent runs on the same host cannot collide.
+          net="smoke-${{ github.run_id }}"
+          app="smoketest-${{ github.run_id }}"
+          trap 'docker rm -f "$app" >/dev/null 2>&1 || true
+                docker network rm "$net" >/dev/null 2>&1 || true' EXIT
+
+          docker network create "$net"
+          docker run -d --name "$app" --network "$net" myapp:${{ github.sha }}
+
+          docker run --rm --network "$net" curlimages/curl:latest \
+            --retry 10 --retry-delay 1 --retry-all-errors --retry-connrefused \
+            -sf "http://${app}:8080/health" \
+            || { echo "/health never responded" >&2; docker logs "$app" >&2; exit 1; }
