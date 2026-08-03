@@ -1,3 +1,3 @@
 module codebahn.net/examples/docker-container
 
-go 1.24
+go 1.26
